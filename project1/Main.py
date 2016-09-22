@@ -1,9 +1,13 @@
 from sklearn.cross_validation import train_test_split as split
-import KNNClassifier
+import KNN_Classifier
 from HardCodedClassifier import HardCoded
-from LoadFile import load_file
+import ReadFile as rf
 
-iris = load_file()
+file_type, file_name = rf.get_file_name()
+iris = rf.load_file(file_type, file_name)
+
+print(file_type, file_name)
+
 # prompt user for test size and random state
 def get_test_size():
     test_size = float(input("Enter a test size: "))
@@ -20,23 +24,7 @@ def get_random_state():
         random_state = int(input("Please enter a positive number."))
 
     return random_state
-"""
-class HardCoded:
-    # define a variable
-    def train(self, data_to_train, target_to_train):
-        print("Lets train\n")
 
-    #
-    def predict(self, data_set_to_predict):
-        # create a empty list
-        val = []
-
-        # fill with 0 to reset the values
-        for i in data_set_to_predict:
-            val.append(0)
-
-        return val
-"""
 def accuracy(predicted_values, test_answers):
     num_predicted_values = 0
 
@@ -47,7 +35,7 @@ def accuracy(predicted_values, test_answers):
     print("Total number tested:               ", test_answers.size)
     print("The percentage is {0:.2f}%".format((num_predicted_values / test_answers.size) * 100))
 
-def play_again():
+def train_again():
 
     # Call functions to get the users input
     ts = float(get_test_size())
@@ -61,20 +49,9 @@ def play_again():
     test.train(training_data, training_target)
     accuracy(test.predict(test_data), test_target)
 
-    playing = input("\nDo you want to play again? (y or n)").lower()
+    playing = input("\nDo you want to train again? (y or n)").lower()
 
     return playing
 
-while (play_again() == "y"):
+while (train_again() == "y"):
     print("")
-
-""""*********************************************************************************************************
-# show the data (the attributes of each instance)
-print(iris.data)
-
-# show the target values (in numeric format) of each instance
-print(iris.target)
-
-# show the actual target names that correspond to each number
-print(iris.target_names)
-"""
