@@ -69,7 +69,6 @@ def train_again():
     # get the data set from a file and split into data and target
     data, targets = rf.load_file(file_type)
 
-    print(data)
     # Call functions to get the users input
     ts = float(get_test_size())
     num = int(get_random_state())
