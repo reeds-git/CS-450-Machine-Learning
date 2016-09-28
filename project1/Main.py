@@ -73,7 +73,7 @@ def train_again():
     ts = float(get_test_size())
     num = int(get_random_state())
 
-    k = 5
+    k = 3
 
     # create an instance of the class
     test = KNN()
@@ -93,4 +93,4 @@ def train_again():
 
 
 while train_again() == "y":
-    print("")
+    pass 
