@@ -42,22 +42,20 @@ def accuracy(predicted_values, test_answers):
     print("The percentage is {0:.2f}%".format((num_predicted_values / test_answers.size) * 100))
 
 
-def calulate_entrpy():
+def calculate_entropy(data, a_class, attribute):
 
     # get the number of rows in the data
+    num_rows = len(data)
 
-    # loop through the rows and fill an array with the attributes (features)
+    # loop through the rows and fill an array with the attribute's values
+    values = []
+    for item in data:
+        if item[attribute] not in values:
+            values.append(item[attribute])
 
-    # get the number of attributes in the array
-
-    # create an array for the count of each feature
-    #    feature_value_count = np.zeros(len(values))
-
-    # create an array for each of the entropy of each attribute
-    #     entropy = np.zeros(len(values))
-
-    # Fill count of each attribute
-
+    # get an array filled with "0" to store the number of attributes and entropy values
+    num_values_in_attribute, attribute_entropies = np.zeros(len(values))
+    index = 0
 
     ## newClass = array of the class values (Yes or No) That get the Yes or No for each values of the attributes
 
@@ -69,9 +67,9 @@ def calulate_entrpy():
         for data_point in data:
             # e.g. if we are in good branch does the data point of a row
             #      equal good
-            if data_point[feature] == v:
-                feature_value_count[value_index] += 1
-                newClasses.append(clas[data_index])
+            if data_point[attribute] == v:
+                num_values_in_attribute[index] += 1
+                newClasses.append(a_class[data_index])
                 # e.g. newClasses = ['y','n','y','n'] for credit score branch good
             data_index += 1
 
@@ -85,7 +83,7 @@ def calulate_entrpy():
                     class_values.append(c)
 
             # array containing the number of each value of the class ## this starts empty
-            num_class_values = np.zeros(len(class_values))
+            num_class_values, entropy = np.zeros(len(class_values))
 
             # Fill above array ## count the number of yes and no
             class_index = 0
@@ -99,11 +97,11 @@ def calulate_entrpy():
 
             # get the fraction of each item in the class
             for i in range(len(class_values)):
-                entropy[value_index] += calc_entropy(float(num_class_values[i]) / sum(num_class_values))
+                entropy[index] += calculate_entropy(float(num_class_values[i]) / sum(num_class_values))
 
             # get the weight of an entropy  ex: (4/13 * entropy)
-            entropy[value_index] = (entropy[value_index] * (feature_value_count[value_index] / num_data))
-            value_index += 1
+            entropy[index] = (entropy[index] * (num_values_in_attribute[index] / num_rows))
+            index += 1
 
         return sum(entropy)
 
