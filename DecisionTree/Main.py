@@ -55,54 +55,44 @@ def calculate_entropy(data, a_class, attribute):
 
     # get an array filled with "0" to store the number of attributes and entropy values
     num_values_in_attribute, attribute_entropies = np.zeros(len(values))
-    index_value, index_row = 0
-    column_values = []
-
-    ## newClass = array of the class values (Yes or No) That get the Yes or No for each values of the attributes
+    num_value, value_in_column, class_index = 0
+    column_values, class_values = []
 
     # loop for each value e.g. good, avg, and low in credit score
-    for v in values:
+    for value in values:
 
-
-        # loop for each row of the data
+        # count the number of occurrences of each item in a column of the data
         for data_point in data:
-            # e.g. if we are in good branch does the data point of a row
-            #      equal good
-            if data_point[attribute] == v:
-                num_values_in_attribute[index_value] += 1
-                column_values.append(a_class[index_row])
-                # e.g. newClasses = ['y','n','y','n'] for credit score branch good
-            index_row += 1
+            if data_point[attribute] == value:
+                num_values_in_attribute[num_value] += 1
+                column_values.append(a_class[value_in_column])
 
+            value_in_column += 1
 
-            ## gets an array of the Yes and No values
-            # array for the class values
-            class_values = []
-            for c in class_values:
-                # if the c is not in the array yet add it
-                if class_values.count(c) == 0:
-                    class_values.append(c)
+            # Fill an array of values in the class column
+            for item_in_class in class_values:
+                # if the item is not in the array yet add it
+                if class_values.count(item_in_class) == 0:
+                    class_values.append(item_in_class)
 
             # array containing the number of each value of the class ## this starts empty
             num_class_values, entropy = np.zeros(len(class_values))
 
-            # Fill above array ## count the number of yes and no
-            class_index = 0
-            # find the number of yes for each good in credit score
-            # e.g. credit score - good branch - would contain 2 2
-            for cv in class_values:
-                for c in class_values:
-                    if c == cv:
+            # Count the number of occurrences of each item in the column
+            for occurrence in class_values:
+                for col_val in column_values:
+                    if col_val == occurrence:
                         num_class_values[class_index] += 1
                 class_index += 1
 
             # get the fraction of each item in the class
             for i in range(len(class_values)):
-                entropy[index_value] += calculate_entropy(float(num_class_values[i]) / sum(num_class_values))
+                entropy[num_value] += calculate_entropy(float(num_class_values[i]) / sum(num_class_values))
 
             # get the weight of an entropy  ex: (4/13 * entropy)
-            entropy[index_value] = (entropy[index_value] * (num_values_in_attribute[index_value] / num_rows))
-            index_value += 1
+            weight = num_values_in_attribute[num_value] / num_rows
+            entropy[num_value] = (entropy[num_value] * (num_values_in_attribute[num_value] / weight))
+            num_value += 1
 
         return sum(entropy)
 
