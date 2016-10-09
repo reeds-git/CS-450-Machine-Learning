@@ -55,29 +55,30 @@ def calculate_entropy(data, a_class, attribute):
 
     # get an array filled with "0" to store the number of attributes and entropy values
     num_values_in_attribute, attribute_entropies = np.zeros(len(values))
-    index = 0
+    index_value, index_row = 0
+    column_values = []
 
     ## newClass = array of the class values (Yes or No) That get the Yes or No for each values of the attributes
 
     # loop for each value e.g. good, avg, and low in credit score
     for v in values:
-        data_index = 0
-        newClasses = []
+
+
         # loop for each row of the data
         for data_point in data:
             # e.g. if we are in good branch does the data point of a row
             #      equal good
             if data_point[attribute] == v:
-                num_values_in_attribute[index] += 1
-                newClasses.append(a_class[data_index])
+                num_values_in_attribute[index_value] += 1
+                column_values.append(a_class[index_row])
                 # e.g. newClasses = ['y','n','y','n'] for credit score branch good
-            data_index += 1
+            index_row += 1
 
 
             ## gets an array of the Yes and No values
             # array for the class values
             class_values = []
-            for c in newClasses:
+            for c in class_values:
                 # if the c is not in the array yet add it
                 if class_values.count(c) == 0:
                     class_values.append(c)
@@ -90,18 +91,18 @@ def calculate_entropy(data, a_class, attribute):
             # find the number of yes for each good in credit score
             # e.g. credit score - good branch - would contain 2 2
             for cv in class_values:
-                for c in newClasses:
+                for c in class_values:
                     if c == cv:
                         num_class_values[class_index] += 1
                 class_index += 1
 
             # get the fraction of each item in the class
             for i in range(len(class_values)):
-                entropy[index] += calculate_entropy(float(num_class_values[i]) / sum(num_class_values))
+                entropy[index_value] += calculate_entropy(float(num_class_values[i]) / sum(num_class_values))
 
             # get the weight of an entropy  ex: (4/13 * entropy)
-            entropy[index] = (entropy[index] * (num_values_in_attribute[index] / num_rows))
-            index += 1
+            entropy[index_value] = (entropy[index_value] * (num_values_in_attribute[index_value] / num_rows))
+            index_value += 1
 
         return sum(entropy)
 
