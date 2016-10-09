@@ -87,7 +87,7 @@ def calculate_entropy(data, a_class, attribute):
 
             # get the fraction of each item in the class
             for i in range(len(class_values)):
-                entropy[num_value] += calculate_entropy(float(num_class_values[i]) / sum(num_class_values))
+                entropy[num_value] += calc_entropy(float(num_class_values[i]) / sum(num_class_values))
 
             # get the weight of an entropy  ex: (4/13 * entropy)
             weight = num_values_in_attribute[num_value] / num_rows
@@ -97,9 +97,14 @@ def calculate_entropy(data, a_class, attribute):
         return sum(entropy)
 
 
+def calc_entropy(var):
+    return -var * np.log2(var) if var != 0 else 0
 
 
+def average_ent(entropy_1, entropy_2, var1, var2):
+    bob = (entropy_1 * var1) + (entropy_2 * var2)
 
+    return bob
 
 
 
@@ -129,16 +134,6 @@ def train_again():
 
 
     ###########################################################################
-
-
-    def calc_entropy(var):
-        return (-var * np.log2(var1) if var != 0 else 0)
-
-
-    def average_ent(entropy_1, entropy_2, var1, var2):
-        bob = (entropy_1 * var1) + (entropy_2 * var2)
-
-        return bob
 
     var1 = 3/5
     var2 = 2/5
