@@ -109,15 +109,6 @@ def average_ent(entropy_1, entropy_2, var1, var2):
 
 
 
-
-
-
-
-
-
-
-
-
 def train_again():
 
     # get the file type
@@ -137,7 +128,7 @@ def train_again():
 
     var1 = 3/5
     var2 = 2/5
-    var3 = 4/5
+    var3 = 1/5
 
     total_entropy = calc_entropy(var1) + calc_entropy(var2) + calc_entropy(var3)
     print(total_entropy)
