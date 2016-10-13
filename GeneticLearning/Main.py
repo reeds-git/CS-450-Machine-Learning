@@ -7,9 +7,9 @@ from sklearn import preprocessing as prep
 
 class Neuron:
     def __init__(self, attributes):
-        self.weight = [ran_float(-2, 2) for _ in range(attributes)]
-        self.threshold = 0
-        self.bias = -1
+        self.weight = [ran_float(-2.0, 2.0) for _ in range(attributes)]
+        self.threshold = 0.0
+        self.bias = -1.0
 
     def compute_g(self, input_values):
         """
@@ -46,6 +46,14 @@ def get_test_size():
     return test_size
 
 
+def get_num_neurons():
+    """
+    Prompt the user for the number of neurons to add
+    :return: returns the number of neurons desired
+    """
+    return int(input("Enter the number of neurons you desire to have: "))
+
+
 def get_random_state():
     """
     prompt for a number to randomize the data
@@ -71,14 +79,16 @@ def accuracy(predicted_values, test_answers):
     print("The percentage is {0:.2f}%".format((num_predicted_values / test_answers.size) * 100))
 
 
-def create_layer(neurons, num_neurons):
+def create_layer(number, num_neurons, data):
 
-    neuron = Neuron()
-
+    neurons = Neuron(num_neurons)
+    neuron = [neurons for _ in range(number)]
     # add as many neurons as passed in
-    #for _ in range(num_neurons):
+
+    neurons.compute_g(data)
 
     print("The random number is ", neuron.weight)
+
 
 def train_again():
 
@@ -91,11 +101,10 @@ def train_again():
     # Call functions to get the users input
     ts = float(get_test_size())
     num = int(get_random_state())
+    num_neurons = int(get_num_neurons())
 
-    array = [5]
-    create_layer(array, 3)
-
-    print("the array is: \n", array)
+    for _ in range(num_neurons):
+        create_layer(2, num_neurons, data)
 
     # check the accuracy
     # accuracy(test.train_knn(k, std_train_data, training_target, std_test_data), test_target)
