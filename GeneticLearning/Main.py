@@ -7,7 +7,7 @@ from sklearn import preprocessing as prep
 
 class Neuron:
     def __init__(self, attributes):
-        self.weight = [ran_float(-2.0, 2.0) for _ in range(attributes)]
+        self.weight = [ran_float(-2.0, 2.0) for _ in range(attributes + 1)]
         self.threshold = 0.0
         self.bias = -1.0
 
@@ -15,14 +15,14 @@ class Neuron:
         """
         Add a bias to the list of inputs, compute the h for all of the inputs based on the weights,
           and returns a 1 if the neuron fired and a 0 if it didn't fire
-        :param inputs: input values
+        :param inputs: the attributes of the data
         :return: 1 or 0 depending on if the neuron fires
         """
         # add a bias, default is -1
-        input_values = input_values + [self.bias]
+        input_values = np.append(input_values, self.bias)
 
         # h is the sum of each weight times the input
-        compute_h = sum([self.weights[weight] * input for weight, input in enumerate(input_values)])
+        compute_h = sum([self.weight[a_weight] * input for a_weight, input in enumerate(input_values)])
 
         # the threshold determines if the neuron fires
         if compute_h >= self.threshold:
@@ -79,15 +79,14 @@ def accuracy(predicted_values, test_answers):
     print("The percentage is {0:.2f}%".format((num_predicted_values / test_answers.size) * 100))
 
 
-def create_layer(number, num_neurons, data):
-
-    neurons = Neuron(num_neurons)
-    neuron = [neurons for _ in range(number)]
-    # add as many neurons as passed in
-
-    neurons.compute_g(data)
-
-    print("The random number is ", neuron.weight)
+def create_layer(num_neurons, num_attributes):
+    """
+    create the neurons each layer
+    :param num_neurons: The number of neurons to create
+    :param num_attributes: The number of attributes to add
+    :return: A list of all of the neurons
+    """
+    return [Neuron(num_attributes) for _ in range(num_neurons)]
 
 
 def train_again():
@@ -103,8 +102,15 @@ def train_again():
     num = int(get_random_state())
     num_neurons = int(get_num_neurons())
 
-    for _ in range(num_neurons):
-        create_layer(2, num_neurons, data)
+    # number of attributes or columns in the data set
+    num_attributes = data.shape[1]
+
+    # a list of each neuron a layer
+    layer = create_layer(num_neurons, num_attributes)
+
+    for x in data:
+        outputs = [n.compute_g(x) for n in layer]
+        print("The layer is : ", outputs)
 
     # check the accuracy
     # accuracy(test.train_knn(k, std_train_data, training_target, std_test_data), test_target)
