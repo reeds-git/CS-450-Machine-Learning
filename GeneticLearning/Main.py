@@ -89,6 +89,22 @@ def create_layer(num_neurons, num_attributes):
     return [Neuron(num_attributes) for _ in range(num_neurons)]
 
 
+def ready_data(training_data, testing_data):
+    """
+    Standardize the data for processing. See http://sebastianraschka.com/Articles/2014_about_feature_scaling.html
+        for more info
+    :param training_data: the data to be trained on
+    :param testing_data: the data to test with
+    :return: standardized training data and testing data
+    """
+
+    std_scale = prep.StandardScaler().fit(training_data)
+    std_training_data = std_scale.transform(training_data)
+    std_testing_data = std_scale.transform(testing_data)
+
+    return std_training_data, std_testing_data
+
+
 def train_again():
 
     # get the file type
@@ -102,6 +118,12 @@ def train_again():
     num = int(get_random_state())
     num_neurons = int(get_num_neurons())
 
+    # create 4 variables and splits the array into different parts
+    training_data, test_data, training_target, test_target = split(data, targets, test_size=ts, random_state=num)
+
+    # normalize the data
+    std_train_data, std_test_data = ready_data(training_data, test_data)
+
     # number of attributes or columns in the data set
     num_attributes = data.shape[1]
 
@@ -113,7 +135,7 @@ def train_again():
         print("The layer is : ", outputs)
 
     # check the accuracy
-    # accuracy(test.train_knn(k, std_train_data, training_target, std_test_data), test_target)
+    # accuracy(test.train_knn(std_train_data, training_target, std_test_data), test_target)
 
     playing = input("\nDo you want to train again? (y or n)").lower()
 
