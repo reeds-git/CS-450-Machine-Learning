@@ -30,7 +30,7 @@ def load_file(file_type):
     """
     Load_file takes in a number to indicate the file type and gets the data and targets from the file from the data set
     :param file_type: file type by number. '1' is for diabetes and '2' is for Iris
-    :return: data and targets
+    :return: data, targets, and header
     """
     header = None
     if file_type == 1:
