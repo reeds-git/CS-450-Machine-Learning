@@ -15,17 +15,17 @@ class Neuron:
         """
         Add a bias to the list of inputs, compute the h for all of the inputs based on the weights,
           and returns a 1 if the neuron fired and a 0 if it didn't fire
-        :param inputs: the attributes of the data
+        :param input_values: the attributes of the data
         :return: 1 or 0 depending on if the neuron fires
         """
         # add a bias, default is -1
         input_values = np.append(input_values, self.bias)
 
         # h is the sum of each weight times the input
-        compute_h = sum([self.weight[a_weight] * input for a_weight, input in enumerate(input_values)])
+        compute_h = sum([self.weight[a_weight] * a_input for a_weight, a_input in enumerate(input_values)])
 
         # the threshold determines if the neuron fires
-        if compute_h >= self.threshold:
+        if self.threshold <= compute_h:
             # neuron fires
             return 1
         else:

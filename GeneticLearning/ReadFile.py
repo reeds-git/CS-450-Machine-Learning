@@ -29,7 +29,7 @@ def split_data(data_set):
 def load_file(file_type):
     """
     Load_file takes in a number to indicate the file type and gets the data and targets from the file from the data set
-    :param file_type: file type by number. '1' is for Cars, '2' is for Iris, and '3' is for breast cancer
+    :param file_type: file type by number. '1' is for diabetes and '2' is for Iris
     :return: data and targets
     """
     header = None
