@@ -1,8 +1,10 @@
 import numpy as np
 import ReadFile as rf
+from scipy.special import expit as g
 from random import triangular as ran_float
 from sklearn.cross_validation import train_test_split as split
 from sklearn import preprocessing as prep
+
 
 class Neuron:
     """
@@ -10,51 +12,63 @@ class Neuron:
     Contains a compute_g function that takes in and input and returns the h value.
     """
 
-    def __init__(self, attributes):
+    def __init__(self, num_inputs):
         """
-        Takes in an attribute and sets the weight to a random value between -2.0 & 2.0
-        h_value = 0.0
-        a_value = 0.0
+        Takes in an attribute and sets the weight to a random value between -1.0 & 1.0
         Sets the threshold to 0.0
         Sets the bias to -1.0
-        :param attributes:
+        :param num_inputs: the number of inputs into a neuron
         """
-        self.weight = [0.1, 0.3, 0.5]#[ran_float(-1.0, 1.0) for _ in range(attributes + 1)]
+        self.weight = [0.1, 0.3, 0.5]
+        '''  self.weight = []
+        for _ in range(num_inputs + 1):
+            self.weight.append(ran_float(-1.0, 1.0))
+        '''
         print("The weight is ", self.weight)
-        self.h_value = 0.0
-        self.a_value = 0.0
         self.threshold = 0.0
         self.bias = -1.0
 
-    def compute_g(self, input_values):
+    def compute_a(self, input_values):
         """
         Add a bias to the list of inputs, compute the h for all of the inputs based on the weights,
-          and returns a 1 if the neuron fired and a 0 if it didn't fire
         :param input_values: the attributes of the data
-        :return: 1 or 0 depending on if the neuron fires
+        :return: the activation value of a neuron
         """
-        # add a bias, default is -1
-        input_values = np.append(input_values, self.bias)
+        input_values = np.append(input_values, [self.bias])
+        return g(sum([self.weight[a_weight] * x for a_weight, x in enumerate(input_values)]))
 
-        # h is the sum of each weight times the input
-        self.h_value = sum([self.weight[a_weight] * input for a_weight, input in enumerate(input_values)])
-
-        return self.h_value
-        # the threshold determines if the neuron fires
-        """if self.h_value >= self.threshold:
-            # neuron fires
-            return 1
-        else:
-            # neuron doesn't fire
-            return 0
-        """
 
 class Layer:
     def __init__(self):
         self.layer_num = 0.0
-        self.num_neurons = 0.0
+        self.num_neurons = 0
         self.exit_layer = False
         self.current_layer = []
+        self.num_layers = 0
+
+    def get_num_neurons(self):
+        """
+        Prompt the user for the number of neurons to add
+        Sets the number of neurons desired
+        """
+        self.num_neurons = int(input("Enter the number of neurons you desire to have: "))
+
+    def get_num_layers(self):
+        """
+        Prompt the user for the number of layers to add
+        Sets the number of layers desired
+        """
+        self.num_layers = int(input("Enter the number of layers you desire to have: "))
+
+    def create_layer(self, num_attributes):
+        """
+        create the neurons each layer
+        :param num_attributes: The number of attributes to add
+        :return: A list of all of the neurons
+        """
+
+        [Neuron(num_attributes) for _ in range(self.num_neurons)]
+
 
 def get_test_size():
     """
@@ -67,14 +81,6 @@ def get_test_size():
         test_size = float(input("Please enter a value between 0.0 and 0.5: "))
 
     return test_size
-
-
-def get_num_neurons():
-    """
-    Prompt the user for the number of neurons to add
-    :return: returns the number of neurons desired
-    """
-    return int(input("Enter the number of neurons you desire to have: "))
 
 
 def get_random_state():
@@ -100,16 +106,6 @@ def accuracy(predicted_values, test_answers):
     print("The number of correct predictions: ", num_predicted_values)
     print("/", test_answers.size)
     print("The percentage is {0:.2f}%".format((num_predicted_values / test_answers.size) * 100))
-
-
-def create_layer(num_neurons, num_attributes):
-    """
-    create the neurons each layer
-    :param num_neurons: The number of neurons to create
-    :param num_attributes: The number of attributes to add
-    :return: A list of all of the neurons
-    """
-    return [Neuron(num_attributes) for _ in range(num_neurons)]
 
 
 def ready_data(training_data, testing_data):
@@ -139,7 +135,6 @@ def train_again():
     # Call functions to get the users input
     ts = float(get_test_size())
     num = int(get_random_state())
-    num_neurons = int(get_num_neurons())
 
     # create 4 variables and splits the array into different parts
     training_data, test_data, training_target, test_target = split(data, targets, test_size=ts, random_state=num)
@@ -150,13 +145,22 @@ def train_again():
     # number of attributes or columns in the data set
     num_attributes = data.shape[1]
 
-    # a list of each neuron a layer
-    layer = create_layer(num_neurons, num_attributes)
+    n = Neuron(0)
 
-    for x in data:
+    activation = n.compute_a(data)
+
+    print("The activation is : ", activation)
+    # a list of each neuron a layer
+#    layer = Layer()
+ #   layer.get_num_layers()
+  #  layer.get_num_neurons()
+   # layer.create_layer(num_attributes)
+
+
+    """for x in data:
         outputs = [n.compute_g(x) for n in layer]
         print("The layer is : ", outputs)
-
+        """
     # check the accuracy
     # accuracy(test.train_knn(std_train_data, training_target, std_test_data), test_target)
 
