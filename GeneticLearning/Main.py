@@ -4,10 +4,25 @@ from random import triangular as ran_float
 from sklearn.cross_validation import train_test_split as split
 from sklearn import preprocessing as prep
 
-
 class Neuron:
+    """
+    A Neuron contains weight, threshold=0, and bias=-1
+    Contains a compute_g function that takes in and input and returns the h value.
+    """
+
     def __init__(self, attributes):
-        self.weight = [ran_float(-2.0, 2.0) for _ in range(attributes + 1)]
+        """
+        Takes in an attribute and sets the weight to a random value between -2.0 & 2.0
+        h_value = 0.0
+        a_value = 0.0
+        Sets the threshold to 0.0
+        Sets the bias to -1.0
+        :param attributes:
+        """
+        self.weight = [0.1, 0.3, 0.5]#[ran_float(-1.0, 1.0) for _ in range(attributes + 1)]
+        print("The weight is ", self.weight)
+        self.h_value = 0.0
+        self.a_value = 0.0
         self.threshold = 0.0
         self.bias = -1.0
 
@@ -22,16 +37,24 @@ class Neuron:
         input_values = np.append(input_values, self.bias)
 
         # h is the sum of each weight times the input
-        compute_h = sum([self.weight[a_weight] * a_input for a_weight, a_input in enumerate(input_values)])
+        self.h_value = sum([self.weight[a_weight] * input for a_weight, input in enumerate(input_values)])
 
+        return self.h_value
         # the threshold determines if the neuron fires
-        if self.threshold <= compute_h:
+        """if self.h_value >= self.threshold:
             # neuron fires
             return 1
         else:
             # neuron doesn't fire
             return 0
+        """
 
+class Layer:
+    def __init__(self):
+        self.layer_num = 0.0
+        self.num_neurons = 0.0
+        self.exit_layer = False
+        self.current_layer = []
 
 def get_test_size():
     """

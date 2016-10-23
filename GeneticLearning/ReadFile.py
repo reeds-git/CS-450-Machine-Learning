@@ -29,12 +29,12 @@ def split_data(data_set):
 def load_file(file_type):
     """
     Load_file takes in a number to indicate the file type and gets the data and targets from the file from the data set
-    :param file_type: file type by number. '1' is for diabetes and '2' is for Iris
-    :return: data, targets, and header
+    :param file_type: file type by number. '1' is for Cars, '2' is for Iris, and '3' is for breast cancer
+    :return: data and targets
     """
     header = None
     if file_type == 1:
-        data_set = pd.read_csv('pima-indians-diabetes.csv', dtype=float)  # set data as floats
+        data_set = pd.read_csv('PI_diabetes.csv', dtype=float)  # set data as floats
 
         data = data_set.ix[:, data_set.columns != "class"]
         targets = data_set.ix[:, data_set.columns == "class"]
@@ -46,5 +46,15 @@ def load_file(file_type):
     elif file_type == 2:
 
         data, targets = split_data(datasets.load_iris())
+
+    elif file_type == 3:
+        data_set = pd.read_csv('test.csv', dtype=float)  # set data as floats
+
+        data = data_set.ix[:, data_set.columns != "class"]
+        targets = data_set.ix[:, data_set.columns == "class"]
+
+        header = data_set.columns[:-1]
+
+        return data.values, targets.values, header
 
     return data, targets, header
