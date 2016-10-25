@@ -1,6 +1,5 @@
 from sklearn import datasets
-import pandas as pd
-pd.options.mode.chained_assignment = None  # stop warnings from displaying
+from pandas import read_csv
 
 
 def get_file_type():
@@ -34,7 +33,7 @@ def load_file(file_type):
     """
     header = None
     if file_type == 1:
-        data_set = pd.read_csv('PI_diabetes.csv', dtype=float)  # set data as floats
+        data_set = read_csv('PI_diabetes.csv', dtype=float)  # set data as floats
 
         data = data_set.ix[:, data_set.columns != "class"]
         targets = data_set.ix[:, data_set.columns == "class"]
@@ -48,7 +47,7 @@ def load_file(file_type):
         data, targets = split_data(datasets.load_iris())
 
     elif file_type == 3:
-        data_set = pd.read_csv('test.csv', dtype=float)  # set data as floats
+        data_set = read_csv('test.csv', dtype=float)  # set data as floats
 
         data = data_set.ix[:, data_set.columns != "class"]
         targets = data_set.ix[:, data_set.columns == "class"]
