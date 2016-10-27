@@ -47,7 +47,7 @@ def load_file(file_type):
         data, targets = split_data(datasets.load_iris())
 
     elif file_type == 3:
-        data_set = read_csv('test.csv', dtype=float)  # set data as floats
+        data_set = read_csv('test1.csv', dtype=float)  # set data as floats
 
         data = data_set.ix[:, data_set.columns != "class"]
         targets = data_set.ix[:, data_set.columns == "class"]

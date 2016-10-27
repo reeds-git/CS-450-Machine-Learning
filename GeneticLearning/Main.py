@@ -2,6 +2,7 @@ import numpy as np
 import ReadFile
 from random import triangular as ran_float
 from scipy.special import expit as sigmoid
+import math
 from sklearn.cross_validation import train_test_split as split
 from sklearn import preprocessing as prep
 
@@ -51,8 +52,9 @@ def get_random_state():
 def accuracy(predicted_values, test_answers):
     num_predicted_values = 0
 
-    for i in range(test_answers.size):
-        if predicted_values[i] == test_answers[i]:
+    for i, x in zip(predicted_values, test_answers):
+        # index of the highest value
+        if i == x.index(max(x)):
             num_predicted_values += 1
 
     print("The number of correct predictions: ", num_predicted_values)
@@ -68,7 +70,6 @@ def ready_data(training_data, testing_data):
     :param testing_data: the data to test with
     :return: standardized training data and testing data
     """
-
     std_scale = prep.StandardScaler().fit(training_data)
     std_training_data = std_scale.transform(training_data)
     std_testing_data = std_scale.transform(testing_data)
@@ -107,16 +108,24 @@ class Neuron:
         # add a bias, default is -1
         input_values = np.append(input_values, [self.bias])
 
+        print("inputs {}\nWeights {}".format(input_values, self.weight))
+
         # h is the sum of each weight times the input
         self.h_value = sum([self.weight[w] * inputs for w, inputs in enumerate(input_values)])
-
-        self.a_value = sigmoid(self.h_value)
-
+        print("H = ", self.h_value)
+        #self.a_value = sigmoid(self.h_value)
+        self.a_value = 1/(1+ math.exp(- self.h_value))
+        print("\t\t\t\t\t\tself.a_value ", self.a_value)
         return self.a_value
 
     def compute_delta(self):
 
         return self.delta
+
+
+#class Network:
+ #   def __init__(self, data):
+   #     self.layers, self.a_values = []
 
 
 def create_layer(num_inputs, num_neurons):
@@ -129,6 +138,14 @@ def create_layer(num_inputs, num_neurons):
     return [Neuron(num_inputs) for _ in range(num_neurons)]
 
 
+def compute_hidden_delta(a_value, weights, ):
+    return a_value * (1 - a_value)
+
+
+def compute_output_delta(a_value, t_value):
+    return a_value * (1 - a_value) * (a_value - t_value)
+
+
 def forward_prop(data, network):
     """
     Takes a data set and a network of neurons
@@ -136,12 +153,15 @@ def forward_prop(data, network):
     :param data: the data to compute the a value
     :param network: a network of layers
     """
+    outputs = []
     for x in data:
-        outputs = []
         for index, layer in enumerate(network):
             outputs.append([n.compute_a(outputs[index - 1] if index > 0 else x) for n in layer])
-            print("The layer is {:d} has A values: ".format(index), outputs[index])
+            print("\n\tindex: {}- A values: ".format(index), [n.a_value for n in layer])
+
         print("---------------------")
+    print("max a: ", outputs[len(outputs) - 1])
+    return outputs[len(outputs) - 1]
 
 
 def train_again():
@@ -167,7 +187,6 @@ def train_again():
 
     # get the rest of the layers
     for x in range(num_layers + 1):
-
         if x == 0:
             num_inputs = data.shape[1]
             num_neurons = int(get_num_neurons())
@@ -187,14 +206,17 @@ def train_again():
     std_train_data, std_test_data = ready_data(training_data, test_data)
 
     # compute all of the a values for each neuron and displays each a value of each neuron
-    forward_prop(std_train_data, network)
+    outputs = []
+    #for x in std_train_data:
 
+    outputs.append(forward_prop(std_train_data, network))
+
+
+    print(outputs)
     # check the accuracy
-    #accuracy(test.train_knn(std_train_data, training_target, std_test_data), test_target)
+    #accuracy(std_train_data, test_target)
 
-    playing = input("\nDo you want to train again? (y or n)").lower()
-
-    return playing
+    return input("\nDo you want to train again? (y or n)").lower()
 
 while train_again() == "y":
     pass
