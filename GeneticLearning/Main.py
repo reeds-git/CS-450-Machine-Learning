@@ -2,7 +2,6 @@ import numpy as np
 import ReadFile
 from random import triangular as ran_float
 from scipy.special import expit as sigmoid
-import math
 from sklearn.cross_validation import train_test_split as split
 from sklearn import preprocessing as prep
 
@@ -77,6 +76,20 @@ def ready_data(training_data, testing_data):
     return std_training_data, std_testing_data
 
 
+def get_number_targets(targets):
+    """
+    Gets the number of unique target values
+    :param targets: list of target values
+    :return: number of unique targets
+    """
+    num_targets = []
+    for t in targets:
+        if t not in num_targets:
+            num_targets.append(t)
+
+    return len(num_targets)
+
+
 class Neuron:
     """
     A Neuron contains weight, threshold=0, and bias=-1
@@ -113,55 +126,96 @@ class Neuron:
         # h is the sum of each weight times the input
         self.h_value = sum([self.weight[w] * inputs for w, inputs in enumerate(input_values)])
         print("H = ", self.h_value)
-        #self.a_value = sigmoid(self.h_value)
-        self.a_value = 1/(1+ math.exp(- self.h_value))
-        print("\t\t\t\t\t\tself.a_value ", self.a_value)
+        self.a_value = sigmoid(self.h_value)
+
         return self.a_value
 
-    def compute_delta(self):
+    def compute_hidden_delta(self):
+        return self.a_value * (1 - self.a_value)
 
-        return self.delta
-
-
-#class Network:
- #   def __init__(self, data):
-   #     self.layers, self.a_values = []
+    def compute_output_delta(self, t_value):
+        return self.a_value * (1 - self.a_value) * (self.a_value - t_value)
 
 
 def create_layer(num_inputs, num_neurons):
     """
-    create the neurons each layer
-    :param num_inputs: The number of attributes to add
-    :param num_neurons: The number of neurons to create
-    :return: A list of all of the neurons for that layer
+    Create each neuron based upon the number of neurons specified
+    :param num_inputs: How many inputs to create weights for
+    :param num_neurons: The number of neurons to be created in each level
+    :return: list of neurons with random weights set
     """
-    return [Neuron(num_inputs) for _ in range(num_neurons)]
+    layer = []
+    for x in range(num_neurons):
+        layer.append(Neuron(num_inputs))
+
+    return layer
 
 
-def compute_hidden_delta(a_value, weights, ):
-    return a_value * (1 - a_value)
+def create_network(data, targets):
+    """
+    Create a network with the number of neurons and layer specified by the user
+    :param data: List of the data set values
+    :param targets: List of target values of the data set
+    :return: A list of neurons connected by layers to from a network
+    """
+    num_layers = int(get_num_layers())
 
+    # list of a layer list of neurons
+    network = []
 
-def compute_output_delta(a_value, t_value):
-    return a_value * (1 - a_value) * (a_value - t_value)
+    # get the rest of the layers
+    for layer in range(num_layers + 1):
+        if layer == 0:
+            num_inputs = data.shape[1]
+            num_neurons = int(get_num_neurons())
+        elif layer == num_layers:
+            num_inputs = len(network[layer - 1])
+            num_neurons = get_number_targets(targets)
+        else:
+            num_inputs = len(network[layer - 1])
+            num_neurons = int(get_num_neurons())
+
+        network.append(create_layer(num_inputs, num_neurons))
+
+    return network
 
 
 def forward_prop(data, network):
     """
     Takes a data set and a network of neurons
-    Displays the "a" value of each neron on the layer
+    Displays the activation value of each neron on the layer
     :param data: the data to compute the a value
     :param network: a network of layers
     """
-    outputs = []
-    for x in data:
-        for index, layer in enumerate(network):
-            outputs.append([n.compute_a(outputs[index - 1] if index > 0 else x) for n in layer])
-            print("\n\tindex: {}- A values: ".format(index), [n.a_value for n in layer])
+    a_values_list = []
+    output_a_values = []
 
-        print("---------------------")
-    print("max a: ", outputs[len(outputs) - 1])
-    return outputs[len(outputs) - 1]
+    for row in data:
+        # for each layer in the network
+        for num_layer, layer in enumerate(network):
+            print("--------------- Layer {} ---------------------".format(num_layer))
+            # compute the activation value for each neuron in the layer
+            for neuron in layer:
+                x = 0
+                print("%%%%%%%% Neuron {}   %%%%%%%%%%%%%%%%%%%%%%%".format(x))
+                x += 1
+                if (num_layer - 1) > 0:
+                    # Activation computed based on the previous activation value
+                    print("\t\t\t\t\t\tThe a of previous layer: ", a_values_list[num_layer - 2])
+                    a_values_list.append(neuron.compute_a(a_values_list[num_layer - 1]))
+                    print("\t\t\t\t\t\tThe a neuron: ", a_values_list[num_layer])
+                elif num_layer == 0:
+                    # Activation computed based on data
+                    print("\t\t\t\t\t\tLayer 0 A value: ", neuron.compute_a(row))
+                    a_values_list.append(neuron.compute_a(row))
+                else:
+                    # Add the output layers activation values
+                    output_a_values.append(neuron.compute_a(a_values_list[num_layer - 1]))
+
+        print("\n\tmax a: ", output_a_values)
+        print("\n********************************************************\n")
+
+    return output_a_values
 
 
 def train_again():
@@ -175,29 +229,6 @@ def train_again():
     # Call functions to get the users input
     ts = float(get_test_size())
     num = int(get_random_state())
-    num_layers = int(get_num_layers())
-
-    # number of attributes or columns in the data set
-    network = []
-    num_targets = []
-
-    for t in targets:
-        if t not in num_targets:
-            num_targets.append(t)
-
-    # get the rest of the layers
-    for x in range(num_layers + 1):
-        if x == 0:
-            num_inputs = data.shape[1]
-            num_neurons = int(get_num_neurons())
-        elif x == num_layers:
-            num_inputs = len(network[x - 1])
-            num_neurons = len(num_targets)
-        else:
-            num_inputs = len(network[x - 1])
-            num_neurons = int(get_num_neurons())
-
-        network.append(create_layer(num_inputs, num_neurons))
 
     # create 4 variables and splits the array into different parts
     training_data, test_data, training_target, test_target = split(data, targets, test_size=ts, random_state=num)
@@ -205,14 +236,15 @@ def train_again():
     # normalize the data
     std_train_data, std_test_data = ready_data(training_data, test_data)
 
-    # compute all of the a values for each neuron and displays each a value of each neuron
-    outputs = []
-    #for x in std_train_data:
+    # number of attributes or columns in the data set
+    network = create_network(std_train_data, test_target)
 
-    outputs.append(forward_prop(std_train_data, network))
+    print(network)
 
+    activation_list = forward_prop(std_train_data, network)
 
-    print(outputs)
+    print("The output activations are:\n", activation_list)
+
     # check the accuracy
     #accuracy(std_train_data, test_target)
 
