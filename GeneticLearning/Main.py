@@ -195,8 +195,9 @@ def forward_prop(data, network):
         for num_layer, layer in enumerate(network):
             print("--------------- Layer {} ---------------------".format(num_layer))
             # compute the activation value for each neuron in the layer
+            x = 0
             for neuron in layer:
-                x = 0
+
                 print("%%%%%%%% Neuron {}   %%%%%%%%%%%%%%%%%%%%%%%".format(x))
                 x += 1
                 if (num_layer - 1) > 0:
