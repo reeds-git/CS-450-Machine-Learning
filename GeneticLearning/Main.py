@@ -11,7 +11,7 @@ def get_test_size():
     prompt user for test size and random state (default is 0.3)
     :return: return a test size from 0.0 to 0.5
     """
-    test_size = float(input("Enter a test size: "))
+    test_size = float(input("Enter a test size: ") or 0.3)
 
     while test_size <= 0.0 or test_size > 0.5:
         test_size = float(input("Please enter a value between 0.0 and 0.5: ") or 0.3)
@@ -24,7 +24,7 @@ def get_random_state():
     prompt for a number to randomize the data (default is 12)
     :return: number
     """
-    random_state = int(input("Enter a random state size: "))
+    random_state = int(input("Enter a random state size: ") or 12)
 
     while random_state <= 0:
         random_state = int(input("Please enter a positive number.") or 12)
@@ -49,15 +49,19 @@ def get_num_layers():
 
 
 def accuracy(predicted_values, test_answers):
+    """
+    Display the accuracy of the network
+    :param predicted_values: A list of predicted values
+    :param test_answers: A list of correct answers
+    """
     num_predicted_values = 0
 
-    for i, x in zip(predicted_values, test_answers):
+    for predict, correct in zip(predicted_values, test_answers):
         # index of the highest value
-        if i == x.index(max(x)):
+        if predict.tolist().index(max(predict)) == correct:
             num_predicted_values += 1
 
-    print("The number of correct predictions: ", num_predicted_values)
-    print("/", test_answers.size)
+    print("The number of correct predictions: {}/{}".format(num_predicted_values, test_answers.size))
     print("The percentage is {0:.2f}%".format((num_predicted_values / test_answers.size) * 100))
 
 
@@ -105,11 +109,10 @@ class Neuron:
         Sets the bias to -1.0
         :param num_inputs: values of the attributes of the data
         """
-        self.weight = [ran_float(-1.0, 1.0) for _ in range(num_inputs + 1)]
-        self.h_value = 0.0
+        self.weights = [ran_float(-1.0, 1.0) for _ in range(num_inputs + 1)]
         self.a_value = 0.0
-        self.delta = 0.0
         self.bias = -1.0
+        self.delta = None
 
     def compute_a(self, input_values):
         """
@@ -121,14 +124,13 @@ class Neuron:
         # add a bias, default is -1
         input_values = np.append(input_values, [self.bias])
 
-        print("inputs {}\nWeights {}".format(input_values, self.weight))
-
+        h_value = 0
         # h is the sum of each weight times the input
-        self.h_value = sum([self.weight[w] * inputs for w, inputs in enumerate(input_values)])
-        print("H = ", self.h_value)
-        self.a_value = sigmoid(self.h_value)
+        for weight, inputs in enumerate(input_values):
+            h_value += (self.weights[weight] * inputs)
 
-        print("A-Value: ", self.a_value)
+        self.a_value = sigmoid(h_value)
+
         return self.a_value
 
 
@@ -146,6 +148,7 @@ class Network:
         self.learn_rate = .2
         self.num_layers = int(get_num_layers())  # total number of layers the user wants
 
+        print("Number of Layers: ", self.num_layers)
         for layer in range(0, self.num_layers):
             self.list_layers.append(self.create_layer(layer, data, targets, self.num_layers))
 
@@ -160,89 +163,144 @@ class Network:
         """
         num_targets = get_number_targets(targets)
 
+        print("Layer {} in {} total layers".format(current_layer_num, total_layers))
         # create a hidden layer for the network
         if 0 < current_layer_num < (total_layers - 1):
+            print("Im in layer ", current_layer_num)
             # create neurons with the inputs being the previous neurons activation value
             num_neurons = int(get_num_neurons())
             return [Neuron(len(self.list_layers[current_layer_num - 1])) for _ in range(num_neurons)]
 
         # create an input layer for the network
         elif current_layer_num == 0:
+            print("\t\t\t\t\t\t\t\t\t\telif ")
             # create neurons with the inputs being the data
             num_neurons = get_number_targets(targets)
             return [Neuron(data.shape[1]) for _ in range(num_neurons)]
 
         # create an output layer for the network
         else:
+            print("I am in the else")
             # create neurons with the inputs being the previous neurons activation value
             return [Neuron(len(self.list_layers[current_layer_num - 1])) for _ in range(num_targets)]
 
-    def compute_hidden_delta(self, a_neuron, list_weights, delta_right_layer):
+    @staticmethod
+    def compute_hidden_delta(a_value, list_weights, delta_right_layer):
         """
         Compute the delta value for the hidden layer neurons for back propagation
-        a_value = activation value
+        :param a_value: The current neuron for the activation value
         :param list_weights: A list of all of the weights for that neuron
         :param delta_right_layer: The delta value from the neuron to the right of the current neuron
         :return: the computed delta value "a * (1 - a) * sum(weights * right_neuron_delta)"
         """
-        return a_neuron.a_value * (1 - a_neuron.a_value) * sum([weight * delta for weight, delta
-                                                        in zip(list_weights, delta_right_layer)])
+        return a_value * (1 - a_value) * sum([weight * delta for weight, delta in zip(
+            list_weights, delta_right_layer)])
 
-    def compute_output_delta(self, a_neuron, t_value):
+    @staticmethod
+    def compute_output_delta(a_value, t_value):
         """
         Compute the delta value for the output layer neurons for back propagation
-        :param a_neuron: The neuron for the activation value
+        :param a_value: The neuron for the activation value
         :param t_value: The target values from the data set
         :return: the computed delta value "a * (1 - a) * (a - target)"
         """
-        return a_neuron.a_value * (1 - a_neuron.a_value) * (a_neuron.a_value - t_value)
+        return a_value * (1 - a_value) * (a_value - t_value)
 
-    def create_new_weights(self, current_weights, delta_value, a_value):
+    def compute_output_activation(self, inputs):
         """
-        Computes the new weight for each neuron
-        :param current_weights: a list of current weights of each neuron
-        :param delta_value: computed delta value based on layer
-        :param a_value: activation value of the neuron
+        Calculate the activation values for all the neurons
+        :param inputs: The inputs going into each neuron
+        :return: A list of the activations
         """
-        return current_weights - (self.learn_rate * delta_value * a_value)
+        output_activations = []
+        for pos, layer in enumerate(self.list_layers):
+            for neuron in layer:
+                if pos > 0:
+                    output_activations.append(neuron.compute_a(output_activations[pos - 1]))
+                else:
+                    output_activations.append(inputs)
 
-    def forward_prop(self, data, network):
+        return output_activations
+
+    def determine_correctness(self, targets, a_values):
         """
-        Takes a data set and a network of neurons
-        Displays the activation value of each neron on the layer
-        :param data: the data to compute the a value
-        :param network: a network of layers
+        Go backwards through the network and check for correctness
+        :param targets: The target values
+        :param a_values: List of all of the activations
         """
-        a_values_list = []
-        output_a_values = []
+        for layer_pos, layer in reversed(list(enumerate(self.list_layers))):
+            for neuron_pos, a_neuron in enumerate(layer):
+                # get the hidden layers' deltas
+                if layer_pos < len(self.list_layers) - 1:
+                    a_neuron.delta = self.compute_hidden_delta(
+                        a_values[layer_pos][neuron_pos],
+                        [neuron.weights[neuron_pos] for neuron in self.list_layers[layer_pos + 1]],
+                        [neuron.delta for neuron in self.list_layers[layer_pos + 1]])
 
-        for row in data:
-            # for each layer in the network
-            for num_layer, layer in enumerate(network):
-                print("--------------- Layer {} ---------------------".format(num_layer))
-                # compute the activation value for each neuron in the layer
-                x = 0
-                for neuron in layer:
+                # get the output layer's delta
+                else:
+                    a_neuron.delta = self.compute_output_delta(a_values[layer_pos][neuron_pos],
+                                                               neuron_pos == targets)
 
-                    print("%%%%%%%% Neuron {}   %%%%%%%%%%%%%%%%%%%%%%%".format(x))
-                    x += 1
-                    if (num_layer - 1) > 0:
-                        # Activation computed based on the previous activation value
-                        print("\t\t\t\t\t\tThe a of previous layer: ", a_values_list[num_layer - 2])
-                        a_values_list.append(neuron.compute_a(a_values_list[num_layer - 1]))
-                        print("\t\t\t\t\t\tThe a neuron: ", a_values_list[num_layer])
-                    elif num_layer == 0:
-                        # Activation computed based on data
-                        print("\t\t\t\t\t\tLayer 0 A value: ", neuron.compute_a(row))
-                        a_values_list.append(neuron.compute_a(row))
-                    else:
-                        # Add the output layers activation values
-                        output_a_values.append(neuron.compute_a(a_values_list[num_layer - 1]))
+    def update_all(self, row_data, a_value):
+        """
+        Go through each neuron in the layer and adjust weights according to the formula
+        :param row_data: A single row of data
+        :param a_value: the activation value to check to ensure correctness
+        :return:
+        """
 
-            print("\n\tmax a: ", output_a_values)
-            print("\n********************************************************\n")
+        for layer_pos, layer in enumerate(self.list_layers):
+            for neuron in layer:
+                if layer_pos > 0:
+                    inputs = a_value[layer_pos - 1]
+                else:
+                    inputs = row_data.tolist()
+                # add a bias
+                inputs = inputs + [-1]
 
-        return output_a_values
+                print("Current weights ", inputs)
+
+                # change the weights connected to the neuron
+                # current_weight - (learn_rate * delta_value * a_value)
+                neuron.weights = [weight - self.learn_rate * neuron.delta * inputs[pos - 1] for pos, weight in enumerate(
+                    neuron.weights)]
+
+                print("Changed weights ", neuron.weights)
+
+    def train_data(self, data, targets):
+        """
+        Train the network to predict the correct output
+        :param data: Data set to train with
+        :param targets: Correct outcomes that are to be predicted
+        """
+        # train for a set amount of times
+        for _ in range(12):
+            activation_list = []
+            for row_data, row_target in zip(data, targets):
+                # calculate the activations of each neuron
+                single_activation = self.compute_output_activation(row_data)
+
+                # get the activations of the output layer of the network
+                activation_list.append(single_activation)
+
+                # find out which neurons' outputs were correct
+                self.determine_correctness(targets, single_activation)
+
+                # change the weights of all neurons that output the wrong answer
+                self.update_all(row_data, single_activation)
+
+    def predict(self, data):
+        """
+        Predict how many the neural network got correct
+        :param data: A data set
+        :return: predicted values
+        """
+        prediction = []
+        for pos in data:
+            prediction.append(self.compute_output_activation(pos)[1])
+
+        return prediction
 
 
 def train_again():
@@ -252,6 +310,9 @@ def train_again():
 
     # get the data set from a file and split into data and target
     data, targets, header = ReadFile.load_file(file_type)
+
+    # create a network
+    a_network = Network(data, targets)
 
     # Call functions to get the users input
     ts = float(get_test_size())
@@ -263,15 +324,11 @@ def train_again():
     # normalize the data
     std_train_data, std_test_data = ready_data(training_data, test_data)
 
-    # number of attributes or columns in the data set
-    #(std_train_data, test_target)
-
-    # activation_list = forward_prop(std_train_data, network)
-
-   # print("The output activations are:\n", activation_list)
+    # train the data
+    a_network.train_data(std_train_data, training_target)
 
     # check the accuracy
-    #accuracy(std_train_data, test_target)
+    accuracy(a_network.predict(std_test_data), test_target)
 
     return input("\nDo you want to train again? (y or n)").lower()
 
