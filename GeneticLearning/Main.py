@@ -4,6 +4,7 @@ from random import triangular as ran_float
 from scipy.special import expit as sigmoid
 from sklearn.cross_validation import train_test_split as split
 from sklearn import preprocessing as prep
+import matplotlib.pyplot as plot
 
 
 def get_test_size():
@@ -32,12 +33,12 @@ def get_random_state():
     return random_state
 
 
-def get_num_neurons():
+def get_num_neurons(current_layer):
     """
     Prompt the user for the number of neurons to add (default is 1)
     :return: returns the number of neurons desired + 1 for the bias
     """
-    return int(input("Enter the number of neurons you desire to have: ") or 1)
+    return int(input("Enter the number of neurons you desire for layer {}: ".format(current_layer)) or 1)
 
 
 def get_num_layers():
@@ -102,10 +103,8 @@ class Neuron:
     def __init__(self, num_inputs):
         """
         Takes in an attribute and sets the weight to a random value between -2.0 & 2.0
-        h_value = 0.0
         a_value = 0.0
-        delta = 0.0
-        Sets the threshold to 0.0
+        delta = None
         Sets the bias to -1.0
         :param num_inputs: values of the attributes of the data
         """
@@ -113,6 +112,7 @@ class Neuron:
         self.a_value = 0.0
         self.bias = -1.0
         self.delta = None
+        self.x = 0
 
     def compute_a(self, input_values):
         """
@@ -123,6 +123,9 @@ class Neuron:
         """
         # add a bias, default is -1
         input_values = np.append(input_values, [self.bias])
+
+        self.x += 1
+        print("Call compute a {} times".format(self.x))
 
         h_value = 0
         # h is the sum of each weight times the input
@@ -148,39 +151,34 @@ class Network:
         self.learn_rate = .2
         self.num_layers = int(get_num_layers())  # total number of layers the user wants
 
-        print("Number of Layers: ", self.num_layers)
         for layer in range(0, self.num_layers):
             self.list_layers.append(self.create_layer(layer, data, targets, self.num_layers))
 
-    def create_layer(self, current_layer_num, data, targets, total_layers):
+    def create_layer(self, current_layer_num, data, targets, num_layers):
         """
         Create each layer of neurons in the network based upon the number of neurons specified
         :param current_layer_num:
         :param data: The data to add inputs for the input layer or layer 0
         :param targets: target values of the data to find the number of unique elements for the output nodes
-        :param total_layers: Total number of layers to create
+        :param num_layers: Total number of layers to create
         :return:
         """
         num_targets = get_number_targets(targets)
 
-        print("Layer {} in {} total layers".format(current_layer_num, total_layers))
         # create a hidden layer for the network
-        if 0 < current_layer_num < (total_layers - 1):
-            print("Im in layer ", current_layer_num)
+        if 0 < current_layer_num < (num_layers - 1):
             # create neurons with the inputs being the previous neurons activation value
-            num_neurons = int(get_num_neurons())
+            num_neurons = int(get_num_neurons(current_layer_num))
             return [Neuron(len(self.list_layers[current_layer_num - 1])) for _ in range(num_neurons)]
 
         # create an input layer for the network
         elif current_layer_num == 0:
-            print("\t\t\t\t\t\t\t\t\t\telif ")
             # create neurons with the inputs being the data
-            num_neurons = get_number_targets(targets)
+            num_neurons = int(get_num_neurons(current_layer_num))
             return [Neuron(data.shape[1]) for _ in range(num_neurons)]
 
         # create an output layer for the network
         else:
-            print("I am in the else")
             # create neurons with the inputs being the previous neurons activation value
             return [Neuron(len(self.list_layers[current_layer_num - 1])) for _ in range(num_targets)]
 
@@ -193,8 +191,7 @@ class Network:
         :param delta_right_layer: The delta value from the neuron to the right of the current neuron
         :return: the computed delta value "a * (1 - a) * sum(weights * right_neuron_delta)"
         """
-        return a_value * (1 - a_value) * sum([weight * delta for weight, delta in zip(
-            list_weights, delta_right_layer)])
+        return a_value * (1 - a_value) * sum([weight * delta for weight, delta in zip(list_weights, delta_right_layer)])
 
     @staticmethod
     def compute_output_delta(a_value, t_value):
@@ -212,15 +209,10 @@ class Network:
         :param inputs: The inputs going into each neuron
         :return: A list of the activations
         """
-        output_activations = []
+        activations = []
         for pos, layer in enumerate(self.list_layers):
-            for neuron in layer:
-                if pos > 0:
-                    output_activations.append(neuron.compute_a(output_activations[pos - 1]))
-                else:
-                    output_activations.append(inputs)
-
-        return output_activations
+            activations.append([neuron.compute_a(activations[pos - 1] if pos > 0 else inputs) for neuron in layer])
+        return activations
 
     def determine_correctness(self, targets, a_values):
         """
@@ -231,7 +223,7 @@ class Network:
         for layer_pos, layer in reversed(list(enumerate(self.list_layers))):
             for neuron_pos, a_neuron in enumerate(layer):
                 # get the hidden layers' deltas
-                if layer_pos < len(self.list_layers) - 1:
+                if layer_pos < (len(self.list_layers) - 1):
                     a_neuron.delta = self.compute_hidden_delta(
                         a_values[layer_pos][neuron_pos],
                         [neuron.weights[neuron_pos] for neuron in self.list_layers[layer_pos + 1]],
@@ -247,26 +239,14 @@ class Network:
         Go through each neuron in the layer and adjust weights according to the formula
         :param row_data: A single row of data
         :param a_value: the activation value to check to ensure correctness
-        :return:
         """
-
-        for layer_pos, layer in enumerate(self.list_layers):
+        for i, layer in enumerate(self.list_layers):
             for neuron in layer:
-                if layer_pos > 0:
-                    inputs = a_value[layer_pos - 1]
-                else:
-                    inputs = row_data.tolist()
-                # add a bias
-                inputs = inputs + [-1]
+                self.update_weights(neuron, a_value[i - 1] if i > 0 else row_data.tolist())
 
-                print("Current weights ", inputs)
-
-                # change the weights connected to the neuron
-                # current_weight - (learn_rate * delta_value * a_value)
-                neuron.weights = [weight - self.learn_rate * neuron.delta * inputs[pos - 1] for pos, weight in enumerate(
-                    neuron.weights)]
-
-                print("Changed weights ", neuron.weights)
+    def update_weights(self, neuron, inputs):
+        inputs = inputs + [-1]
+        neuron.weights = [weight - self.learn_rate * neuron.delta * inputs[i] for i, weight in enumerate(neuron.weights)]
 
     def train_data(self, data, targets):
         """
@@ -277,9 +257,11 @@ class Network:
         # train for a set amount of times
         for _ in range(12):
             activation_list = []
+            prediction = []
             for row_data, row_target in zip(data, targets):
                 # calculate the activations of each neuron
                 single_activation = self.compute_output_activation(row_data)
+                prediction.append(self.compute_output_activation(row_data)[-1])
 
                 # get the activations of the output layer of the network
                 activation_list.append(single_activation)
@@ -298,7 +280,7 @@ class Network:
         """
         prediction = []
         for pos in data:
-            prediction.append(self.compute_output_activation(pos)[1])
+            prediction.append(self.compute_output_activation(pos)[-1])
 
         return prediction
 
